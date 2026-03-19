@@ -16,6 +16,7 @@ use crate::{
 pub struct BotConfig {
     pub poll_interval_secs: u64,
     pub clix_path: String,
+    pub own_handle: String,
     pub auto_reply: auto_reply::AutoReplyConfig,
     pub follow_dm: follow_dm::FollowDmConfig,
     pub ai: AiConfig,
@@ -26,6 +27,7 @@ impl Default for BotConfig {
         Self {
             poll_interval_secs: 60,
             clix_path: "clix".to_string(),
+            own_handle: String::new(),
             auto_reply: auto_reply::AutoReplyConfig {
                 enabled: false,
                 keywords: vec![],
@@ -75,18 +77,16 @@ impl BotEngine {
 
         loop {
             let cfg = self.config.read().await.clone();
+
+            if cfg.own_handle.is_empty() {
+                tracing::warn!("bot.own_handle not configured — set your X handle in Settings");
+                tokio::time::sleep(std::time::Duration::from_secs(cfg.poll_interval_secs)).await;
+                continue;
+            }
+
             let clix = ClixClient::new(&cfg.clix_path);
 
-            let own_handle = match clix.get_own_handle().await {
-                Ok(h) => h,
-                Err(e) => {
-                    tracing::error!("Could not get own handle from clix: {}. Is clix authenticated?", e);
-                    sleep(Duration::from_secs(cfg.poll_interval_secs)).await;
-                    continue;
-                }
-            };
-
-            if let Err(e) = self.poll_once(&cfg, &clix, &own_handle).await {
+            if let Err(e) = self.poll_once(&cfg, &clix).await {
                 tracing::error!("Poll error: {}", e);
             }
 
@@ -96,11 +96,11 @@ impl BotEngine {
         }
     }
 
-    async fn poll_once(&self, cfg: &BotConfig, clix: &ClixClient, own_handle: &str) -> Result<()> {
-        tracing::debug!("Polling as @{}", own_handle);
+    async fn poll_once(&self, cfg: &BotConfig, clix: &ClixClient) -> Result<()> {
+        tracing::debug!("Polling as @{}", cfg.own_handle);
 
-        auto_reply::run(&self.pool, clix, &cfg.auto_reply, &cfg.ai).await?;
-        follow_dm::run(&self.pool, clix, own_handle, &cfg.follow_dm, &cfg.ai).await?;
+        auto_reply::run(&self.pool, clix, &cfg.own_handle, &cfg.auto_reply, &cfg.ai).await?;
+        follow_dm::run(&self.pool, clix, &cfg.own_handle, &cfg.follow_dm, &cfg.ai).await?;
 
         Ok(())
     }

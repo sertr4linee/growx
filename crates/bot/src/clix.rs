@@ -2,23 +2,16 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 use tokio::process::Command;
 
+/// A tweet/mention from the feed.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Mention {
     pub id: String,
     pub text: String,
-    pub author: MentionAuthor,
+    pub author_handle: String,
+    pub reply_to_handle: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct MentionAuthor {
-    pub handle: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct FollowerList {
-    pub users: Vec<FollowerUser>,
-}
-
+/// A user from the followers list.
 #[derive(Debug, Clone, Deserialize)]
 pub struct FollowerUser {
     pub handle: String,
@@ -34,6 +27,8 @@ impl ClixClient {
         Self { clix_path: clix_path.into() }
     }
 
+    /// Run a clix command with --json and parse stdout as JSON.
+    /// Strips warning/log lines that appear before the actual JSON.
     async fn run_json(&self, args: &[&str]) -> Result<serde_json::Value> {
         let mut all_args: Vec<&str> = args.to_vec();
         all_args.push("--json");
@@ -42,35 +37,53 @@ impl ClixClient {
             .args(&all_args)
             .output()
             .await
-            .with_context(|| format!("Failed to run clix with args: {:?}", args))?;
+            .with_context(|| format!("Failed to spawn clix (path: {})", self.clix_path))?;
 
-        if !output.status.success() {
+        // clix may print warning lines to stdout before the JSON — find the first [ or {
+        let raw = String::from_utf8_lossy(&output.stdout);
+        let json_start = raw.find(|c| c == '[' || c == '{').with_context(|| {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            anyhow::bail!("clix exited with error: {}", stderr);
-        }
+            format!("No JSON in clix output. stderr: {}", stderr.lines().next().unwrap_or("(empty)"))
+        })?;
 
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        serde_json::from_str(&stdout)
-            .with_context(|| format!("Failed to parse clix JSON output: {}", stdout))
+        serde_json::from_str(&raw[json_start..])
+            .with_context(|| format!("Failed to parse clix JSON (args: {:?})", args))
     }
 
-    pub async fn get_mentions(&self, count: u32) -> Result<Vec<Mention>> {
+    /// Fetch the home timeline feed and return tweets that mention `own_handle`.
+    /// Used as a fallback since `clix search` endpoint is frequently stale on X.
+    pub async fn get_mentions(&self, own_handle: &str, count: u32) -> Result<Vec<Mention>> {
         let count_str = count.to_string();
-        let val = self.run_json(&["search", "@me", "--type", "latest", "--count", &count_str]).await?;
+        let val = self.run_json(&["feed", "--type", "following", "--count", &count_str]).await?;
 
-        let mentions: Vec<Mention> = serde_json::from_value(
-            val.get("tweets").cloned().unwrap_or(serde_json::Value::Array(vec![]))
-        ).unwrap_or_default();
-        Ok(mentions)
+        let all: Vec<Mention> = serde_json::from_value(val).unwrap_or_default();
+
+        // Keep tweets that reply to own_handle OR mention @handle in text
+        let handle_lower = own_handle.to_lowercase();
+        let at_handle = format!("@{}", handle_lower);
+        let filtered = all
+            .into_iter()
+            .filter(|t| {
+                t.reply_to_handle
+                    .as_deref()
+                    .map(|h| h.to_lowercase() == handle_lower)
+                    .unwrap_or(false)
+                    || t.text.to_lowercase().contains(&at_handle)
+            })
+            .collect();
+
+        Ok(filtered)
     }
 
+    /// Fetch the followers list for `handle`.
+    /// Syntax: `clix user <handle> followers <handle> --count <n>`
     pub async fn get_followers(&self, handle: &str, count: u32) -> Result<Vec<String>> {
         let count_str = count.to_string();
-        let val = self.run_json(&["user", handle, "--followers", "--count", &count_str]).await?;
+        let val = self
+            .run_json(&["user", handle, "followers", handle, "--count", &count_str])
+            .await?;
 
-        let users: Vec<FollowerUser> = serde_json::from_value(
-            val.get("followers").cloned().unwrap_or(serde_json::Value::Array(vec![]))
-        ).unwrap_or_default();
+        let users: Vec<FollowerUser> = serde_json::from_value(val).unwrap_or_default();
         Ok(users.into_iter().map(|u| u.handle).collect())
     }
 
@@ -82,14 +95,5 @@ impl ClixClient {
     pub async fn send_dm(&self, handle: &str, text: &str) -> Result<()> {
         self.run_json(&["dm", "send", handle, text]).await?;
         Ok(())
-    }
-
-    /// Returns the authenticated user's handle from `clix auth status`
-    pub async fn get_own_handle(&self) -> Result<String> {
-        let val = self.run_json(&["auth", "status"]).await?;
-        val.get("handle")
-            .and_then(|v| v.as_str())
-            .map(String::from)
-            .context("Could not find handle in auth status output")
     }
 }
