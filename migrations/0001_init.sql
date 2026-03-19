@@ -44,6 +44,7 @@ INSERT OR IGNORE INTO config (key, value) VALUES
     ('follow_dm.ai_variation', 'false'),
     ('bot.poll_interval_secs', '60'),
     ('bot.clix_path', 'clix'),
+    ('bot.own_handle', ''),
     ('ai.provider', 'ollama'),
     ('ai.model', 'llama3'),
     ('ai.api_key', ''),
