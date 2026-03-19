@@ -42,6 +42,7 @@ export default function SettingsPage() {
           updates: {
             'bot.poll_interval_secs': pollInterval,
             'bot.clix_path': clixPath,
+            'bot.own_handle': ownHandle,
             'ai.provider': aiProvider,
             'ai.model': aiModel,
             'ai.api_key': apiKey,
@@ -75,6 +76,17 @@ export default function SettingsPage() {
             value={clixPath}
             onChange={(e) => setClixPath(e.target.value)}
           />
+        </Field>
+        <Field label="Your X Handle" description="Your @handle without the @. Used to detect mentions.">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-sm">@</span>
+            <input
+              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-sky-500"
+              placeholder="yourhandle"
+              value={ownHandle}
+              onChange={(e) => setOwnHandle(e.target.value.replace('@', ''))}
+            />
+          </div>
         </Field>
       </Section>
 
