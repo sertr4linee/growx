@@ -17,6 +17,7 @@ export default function SettingsPage() {
 
   const [pollInterval, setPollInterval] = useState('60')
   const [clixPath, setClixPath] = useState('clix')
+  const [ownHandle, setOwnHandle] = useState('')
   const [aiProvider, setAiProvider] = useState<'openai' | 'ollama'>('ollama')
   const [aiModel, setAiModel] = useState('llama3')
   const [apiKey, setApiKey] = useState('')
@@ -26,6 +27,7 @@ export default function SettingsPage() {
     if (!data) return
     setPollInterval(cfg['bot.poll_interval_secs'] ?? '60')
     setClixPath(cfg['bot.clix_path'] ?? 'clix')
+    setOwnHandle(cfg['bot.own_handle'] ?? '')
     setAiProvider((cfg['ai.provider'] as 'openai' | 'ollama') ?? 'ollama')
     setAiModel(cfg['ai.model'] ?? 'llama3')
     setApiKey(cfg['ai.api_key'] ?? '')

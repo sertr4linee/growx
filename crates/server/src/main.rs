@@ -60,6 +60,7 @@ async fn main() -> Result<()> {
             poll_interval_secs: get_config(&pool, "bot.poll_interval_secs").await
                 .and_then(|v| v.parse().ok()).unwrap_or(60),
             clix_path,
+            own_handle: get_config(&pool, "bot.own_handle").await.unwrap_or_default(),
             auto_reply: AutoReplyConfig {
                 enabled: get_config(&pool, "auto_reply.enabled").await.as_deref() == Some("true"),
                 keywords: get_config(&pool, "auto_reply.keywords").await

@@ -67,6 +67,7 @@ async fn reload_bot_config(state: &AppState) {
             let v = get("bot.clix_path").await;
             if v.is_empty() { "clix".to_string() } else { v }
         },
+        own_handle: get("bot.own_handle").await,
         auto_reply: AutoReplyConfig {
             enabled: get("auto_reply.enabled").await == "true",
             keywords: serde_json::from_str(&get("auto_reply.keywords").await).unwrap_or_default(),
