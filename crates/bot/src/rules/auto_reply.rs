@@ -67,8 +67,8 @@ pub async fn run(
         // Check rate limit
         let allowed = rate_limiter.check_and_increment("auto_reply", config.max_per_day).await?;
         if !allowed {
-            tracing::info!("Auto-reply daily cap reached, skipping @{}", mention.author.handle);
-            log_action(pool, "auto_reply", &mention.author.handle, Some(&mention.id), "", "skipped").await;
+            tracing::info!("Auto-reply daily cap reached, skipping @{}", mention.author_handle);
+            log_action(pool, "auto_reply", &mention.author_handle, Some(&mention.id), "", "skipped").await;
             break;
         }
 
@@ -86,12 +86,12 @@ pub async fn run(
 
         match clix.post_reply(&mention.id, &text).await {
             Ok(_) => {
-                tracing::info!("Replied to @{}: {}", mention.author.handle, text);
-                log_action(pool, "auto_reply", &mention.author.handle, Some(&mention.id), &text, "success").await;
+                tracing::info!("Replied to @{}: {}", mention.author_handle, text);
+                log_action(pool, "auto_reply", &mention.author_handle, Some(&mention.id), &text, "success").await;
             }
             Err(e) => {
-                tracing::error!("Failed to reply to @{}: {}", mention.author.handle, e);
-                log_action(pool, "auto_reply", &mention.author.handle, Some(&mention.id), &e.to_string(), "error").await;
+                tracing::error!("Failed to reply to @{}: {}", mention.author_handle, e);
+                log_action(pool, "auto_reply", &mention.author_handle, Some(&mention.id), &e.to_string(), "error").await;
             }
         }
     }
