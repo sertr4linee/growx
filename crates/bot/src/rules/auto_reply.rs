@@ -20,6 +20,7 @@ pub struct AutoReplyConfig {
 pub async fn run(
     pool: &SqlitePool,
     clix: &ClixClient,
+    own_handle: &str,
     config: &AutoReplyConfig,
     ai_config: &AiConfig,
 ) -> Result<()> {
@@ -27,7 +28,7 @@ pub async fn run(
         return Ok(());
     }
 
-    let mentions = clix.get_mentions(50).await.unwrap_or_default();
+    let mentions = clix.get_mentions(own_handle, 50).await.unwrap_or_default();
     let rate_limiter = RateLimiter::new(pool.clone());
 
     for mention in mentions {
