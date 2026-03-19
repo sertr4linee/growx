@@ -7,7 +7,7 @@ use tokio::sync::RwLock;
 use tokio::time::sleep;
 
 use crate::{
-    ai::{AiConfig, AiProvider},
+    ai::{AiConfig},
     clix::ClixClient,
     rules::{auto_reply, follow_dm},
 };

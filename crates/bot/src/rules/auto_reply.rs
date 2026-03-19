@@ -33,11 +33,12 @@ pub async fn run(
     for mention in mentions {
         // Skip already-processed tweets
         let exists: bool = sqlx::query_scalar!(
-            "SELECT COUNT(*) > 0 FROM seen_mentions WHERE tweet_id = ?",
+            "SELECT COUNT(*) FROM seen_mentions WHERE tweet_id = ?",
             mention.id
         )
         .fetch_one(pool)
         .await
+        .map(|n: i32| n > 0)
         .unwrap_or(false);
 
         if exists {

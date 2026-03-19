@@ -29,7 +29,7 @@ pub async fn get_config(State(state): State<AppState>) -> Json<ConfigResponse> {
         .await
         .unwrap_or_default();
 
-    let config = rows.into_iter().map(|r| (r.key, r.value)).collect();
+    let config = rows.into_iter().filter_map(|r| r.key.map(|k| (k, r.value))).collect();
     Json(ConfigResponse { config })
 }
 

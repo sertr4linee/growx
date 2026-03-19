@@ -37,7 +37,7 @@ impl RateLimiter {
         .fetch_one(&self.pool)
         .await?;
 
-        if row.count >= max_per_day {
+        if row.count.unwrap_or(0) >= max_per_day {
             return Ok(false);
         }
 

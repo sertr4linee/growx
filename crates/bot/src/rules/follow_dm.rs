@@ -32,11 +32,12 @@ pub async fn run(
     for handle in followers {
         // Skip if already DM'd
         let exists: bool = sqlx::query_scalar!(
-            "SELECT COUNT(*) > 0 FROM seen_followers WHERE user_handle = ?",
+            "SELECT COUNT(*) FROM seen_followers WHERE user_handle = ?",
             handle
         )
         .fetch_one(pool)
         .await
+        .map(|n: i32| n > 0)
         .unwrap_or(false);
 
         if exists {
