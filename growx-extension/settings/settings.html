@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GrowX Reply — Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424;
+      --border: #2e2e2e; --accent: #1d9bf0; --text: #e7e9ea;
+      --text-muted: #71767b; --error: #f4212e; --success: #00ba7c;
+      --radius: 12px; --radius-sm: 8px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 24px; }
+    header { display: flex; align-items: center; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 22px; font-weight: 800; }
+    .logo span { color: var(--accent); }
+    h2 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 4px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 13px; font-weight: 500; color: var(--text); }
+    .label-hint { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+    input, select, textarea {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 12px; width: 100%;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); }
+    input[type="password"] { letter-spacing: 2px; }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    select option { background: var(--surface2); }
+    .api-key-row { display: flex; gap: 8px; }
+    .api-key-row input { flex: 1; }
+    .btn-toggle-key { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 10px 12px; transition: all 0.15s; white-space: nowrap; }
+    .btn-toggle-key:hover { border-color: var(--accent); color: var(--text); }
+    .actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; }
+    .btn { border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; padding: 10px 20px; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #1a8cd8; }
+    .status { font-size: 13px; font-weight: 500; }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+    .divider { height: 1px; background: var(--border); }
+    .model-hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">⚡ GrowX <span>Reply</span></div>
+    </header>
+
+    <!-- OpenAI Config -->
+    <div class="section">
+      <div class="section-title">OpenAI Configuration</div>
+      <div class="field">
+        <label>API Key <span class="label-hint">— stored locally, never sent anywhere else</span></label>
+        <div class="api-key-row">
+          <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
+          <button class="btn-toggle-key" id="btn-toggle-key" title="Show/hide">👁</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Model</label>
+        <select id="model">
+          <option value="gpt-4o-mini">gpt-4o-mini — Fast &amp; cheap (recommended)</option>
+          <option value="gpt-4o">gpt-4o — Smarter, costs more</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Niche & Prompt -->
+    <div class="section">
+      <div class="section-title">Your Profile</div>
+      <div class="field">
+        <label>Niche / Context <span class="label-hint">— helps AI write on-brand replies</span></label>
+        <input type="text" id="niche" placeholder="e.g. SaaS founder, indie hacker, crypto trader..." />
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Custom System Prompt <span class="label-hint">— overrides default tone if filled</span></label>
+        <textarea id="customPrompt" placeholder="e.g. You are a crypto influencer. Write punchy, alpha replies under 200 chars. Never use emojis. Always end with a bold take."></textarea>
+        <div class="model-hint">Leave empty to use the built-in tone system (Casual / Pro / Humorous / Engaging)</div>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div class="actions">
+      <span class="status" id="status-msg"></span>
+      <button class="btn btn-primary" id="btn-save">Save Settings</button>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
